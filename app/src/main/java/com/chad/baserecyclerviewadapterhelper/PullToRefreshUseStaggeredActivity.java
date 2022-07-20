@@ -4,8 +4,8 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -22,16 +22,16 @@ import com.chad.library.adapter.base.listener.OnItemClickListener;
 /**
  * https://github.com/CymChad/BaseRecyclerViewAdapterHelper
  */
-public class PullToRefreshUseActivity extends BaseActivity implements BaseQuickAdapter.RequestLoadMoreListener, SwipeRefreshLayout.OnRefreshListener {
+public class PullToRefreshUseStaggeredActivity extends BaseActivity implements BaseQuickAdapter.RequestLoadMoreListener, SwipeRefreshLayout.OnRefreshListener {
     private RecyclerView mRecyclerView;
     private PullToRefreshAdapter pullToRefreshAdapter;
     private SwipeRefreshLayout mSwipeRefreshLayout;
 
-    private static final int TOTAL_COUNTER = 30;
+    private static final int TOTAL_COUNTER = 180;
 
-    private static final int PAGE_SIZE = 6;
+    private static final int PAGE_SIZE = 7;
 
-    private int delayMillis = 1000;
+    private int delayMillis = 3000;
 
     private int mCurrentCounter = 0;
 
@@ -47,7 +47,7 @@ public class PullToRefreshUseActivity extends BaseActivity implements BaseQuickA
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipeLayout);
         mSwipeRefreshLayout.setOnRefreshListener(this);
         mSwipeRefreshLayout.setColorSchemeColors(Color.rgb(47, 223, 189));
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mRecyclerView.setLayoutManager(new StaggeredGridLayoutManager(3,StaggeredGridLayoutManager.VERTICAL));
         setTitle("Pull TO Refresh Use");
         setBackBtn();
         initAdapter();
@@ -64,26 +64,28 @@ public class PullToRefreshUseActivity extends BaseActivity implements BaseQuickA
                 mLoadMoreEndGone = true;
                 pullToRefreshAdapter.setLoadMoreView(new CustomLoadMoreView());
                 mRecyclerView.setAdapter(pullToRefreshAdapter);
-                Toast.makeText(PullToRefreshUseActivity.this, "change complete", Toast.LENGTH_LONG).show();
+                Toast.makeText(PullToRefreshUseStaggeredActivity.this, "change complete", Toast.LENGTH_LONG).show();
             }
         });
         pullToRefreshAdapter.addHeaderView(headView);
+//        pullToRefreshAdapter.setPreLoadNumber();
     }
 
     @Override
     public void onLoadMoreRequested() {
-      mSwipeRefreshLayout.postDelayed(new Runnable() {
-          @Override
-          public void run() {
-              refreshView();
-          }
-      },3000);
+        mSwipeRefreshLayout.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                loadMore();
+            }
+        },3000);
     }
 
-    private void refreshView(){
+    private void loadMore(){
+
         mSwipeRefreshLayout.setEnabled(false);
         if (pullToRefreshAdapter.getData().size() < PAGE_SIZE) {
-            pullToRefreshAdapter.loadMoreEnd(true);
+            pullToRefreshAdapter.loadMoreEnd(false);
         } else {
             if (mCurrentCounter >= TOTAL_COUNTER) {
 //                    pullToRefreshAdapter.loadMoreEnd();//default visible
@@ -126,12 +128,13 @@ public class PullToRefreshUseActivity extends BaseActivity implements BaseQuickA
 //        pullToRefreshAdapter.openLoadAnimation(BaseQuickAdapter.SLIDEIN_LEFT);
 //        pullToRefreshAdapter.setPreLoadNumber(3);
         mRecyclerView.setAdapter(pullToRefreshAdapter);
+//        pullToRefreshAdapter.bindToRecyclerView(mRecyclerView);
         mCurrentCounter = pullToRefreshAdapter.getData().size();
 
         mRecyclerView.addOnItemTouchListener(new OnItemClickListener() {
             @Override
             public void onSimpleItemClick(final BaseQuickAdapter adapter, final View view, final int position) {
-                Toast.makeText(PullToRefreshUseActivity.this, Integer.toString(position), Toast.LENGTH_LONG).show();
+                Toast.makeText(PullToRefreshUseStaggeredActivity.this, Integer.toString(position), Toast.LENGTH_LONG).show();
             }
         });
     }
