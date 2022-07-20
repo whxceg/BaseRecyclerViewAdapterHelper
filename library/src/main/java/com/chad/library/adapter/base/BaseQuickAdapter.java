@@ -28,6 +28,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.LayoutParams;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -141,6 +142,8 @@ public abstract class BaseQuickAdapter<T, K extends BaseViewHolder> extends Recy
 
     private void setRecyclerView(RecyclerView recyclerView) {
         mRecyclerView = recyclerView;
+        recyclerView.removeOnScrollListener(mOnScrollListener);
+        recyclerView.addOnScrollListener(mOnScrollListener);
     }
 
     private void checkNotNull() {
@@ -159,6 +162,56 @@ public abstract class BaseQuickAdapter<T, K extends BaseViewHolder> extends Recy
         setRecyclerView(recyclerView);
         getRecyclerView().setAdapter(this);
     }
+
+    RecyclerView.OnScrollListener mOnScrollListener = new RecyclerView.OnScrollListener() {
+        int[] positions = null;
+
+        @Override
+        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            super.onScrollStateChanged(recyclerView, newState);
+        }
+
+        @Override
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+            if (!mLoadMoreEnable || isLoading()) {
+                return;
+            }
+            if (recyclerView.getLayoutManager() instanceof LinearLayoutManager) {
+                int position = ((LinearLayoutManager) recyclerView.getLayoutManager()).findLastVisibleItemPosition();
+                autoLoadMore(position);
+            } else if (recyclerView.getLayoutManager() instanceof StaggeredGridLayoutManager) {
+
+                int spanCount = ((StaggeredGridLayoutManager) recyclerView.getLayoutManager()).getSpanCount();
+                if (spanCount == 0) {
+                    return;
+                }
+
+                if (positions == null || positions.length != spanCount) {
+                    positions = new int[spanCount];
+                }
+
+                ((StaggeredGridLayoutManager) recyclerView.getLayoutManager()).findLastVisibleItemPositions(positions);
+                ((StaggeredGridLayoutManager) recyclerView.getLayoutManager()).findLastVisibleItemPositions(positions);
+                int position = getMax(positions);
+//                Log.e(TAG, "onScrolled: " + position);
+                autoLoadMore(getMax(positions));
+            }
+        }
+    };
+
+    private int getMax(int[] positions) {
+        int max = 0;
+        if (positions != null && positions.length > 0) {
+            for (int position : positions) {
+                if (max < position) {
+                    max = position;
+                }
+            }
+        }
+        return max;
+    }
+
 
     /**
      * @see #setOnLoadMoreListener(RequestLoadMoreListener, RecyclerView)
@@ -791,8 +844,10 @@ public abstract class BaseQuickAdapter<T, K extends BaseViewHolder> extends Recy
         if (mLoadMoreView.getLoadMoreStatus() == LoadMoreView.STATUS_LOADING) {
             return;
         }
-        mLoadMoreView.setLoadMoreStatus(LoadMoreView.STATUS_DEFAULT);
-        notifyItemChanged(getLoadMoreViewPosition());
+//        mLoadMoreView.setLoadMoreStatus(LoadMoreView.STATUS_DEFAULT);
+        Log.e(TAG, "notifyLoadMoreToLoading: " + getLoadMoreViewPosition());
+//        notifyItemChanged(getLoadMoreViewPosition());
+        autoLoadMore(getLoadMoreViewPosition());
     }
 
     /**
@@ -919,8 +974,9 @@ public abstract class BaseQuickAdapter<T, K extends BaseViewHolder> extends Recy
         //Add up fetch logic, almost like load more, but simpler.
         autoUpFetch(position);
         //Do not move position, need to change before LoadMoreView binding
-        autoLoadMore(position);
+//        autoLoadMore(position);
         int viewType = holder.getItemViewType();
+        Log.e(TAG, "onBindViewHolder: " + position + "  type: " + viewType);
 
         switch (viewType) {
             case 0:
@@ -1407,23 +1463,37 @@ public abstract class BaseQuickAdapter<T, K extends BaseViewHolder> extends Recy
         }
     }
 
-    private void autoLoadMore(int position) {
+    private void autoLoadMore(final int position) {
         if (getLoadMoreViewCount() == 0) {
             return;
         }
         if (position < getItemCount() - mPreLoadNumber) {
             return;
         }
-        if (mLoadMoreView.getLoadMoreStatus() != LoadMoreView.STATUS_DEFAULT) {
+//        Log.e(TAG, "0 run: onLoadMoreRequested " + mLoadMoreView.getLoadMoreStatus());
+        if (mLoadMoreView.getLoadMoreStatus() != LoadMoreView.STATUS_DEFAULT && mLoadMoreView.getLoadMoreStatus() != LoadMoreView.STATUS_FAIL) {
             return;
         }
+        final int lastVisiblePosition = getItemCount() - 1;
+        Log.e(TAG, "-1 run: onLoadMoreRequested " + mLoadMoreView.getLoadMoreStatus() + "   position:" + position + " lastVisiblePosition " +(lastVisiblePosition));
         mLoadMoreView.setLoadMoreStatus(LoadMoreView.STATUS_LOADING);
+        if (getRecyclerView() != null) {
+            getRecyclerView().post(new Runnable() {
+                @Override
+                public void run() {
+                    Log.e(TAG, "run: notifyItemChanged" +lastVisiblePosition);
+                    notifyItemChanged(lastVisiblePosition);
+                }
+            });
+        }
+
         if (!mLoading) {
             mLoading = true;
             if (getRecyclerView() != null) {
                 getRecyclerView().post(new Runnable() {
                     @Override
                     public void run() {
+                        Log.e(TAG, "1 run: onLoadMoreRequested");
                         mRequestLoadMoreListener.onLoadMoreRequested();
                     }
                 });

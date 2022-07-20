@@ -21,6 +21,7 @@ import java.util.List;
  */
 public class MultipleItemUseActivity extends BaseActivity {
     private RecyclerView mRecyclerView;
+    MultipleItemQuickAdapter multipleItemAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,7 +31,7 @@ public class MultipleItemUseActivity extends BaseActivity {
         setBackBtn();
         mRecyclerView = (RecyclerView) findViewById(R.id.rv_list);
         final List<MultipleItem> data = DataServer.getMultipleItemData();
-        final MultipleItemQuickAdapter multipleItemAdapter = new MultipleItemQuickAdapter(this, data);
+        multipleItemAdapter = new MultipleItemQuickAdapter(this, data);
         final GridLayoutManager manager = new GridLayoutManager(this, 4);
         mRecyclerView.setLayoutManager(manager);
         multipleItemAdapter.setSpanSizeLookup(new BaseQuickAdapter.SpanSizeLookup() {
@@ -40,6 +41,30 @@ public class MultipleItemUseActivity extends BaseActivity {
             }
         });
         mRecyclerView.setAdapter(multipleItemAdapter);
+
+        multipleItemAdapter.setOnLoadMoreListener(new BaseQuickAdapter.RequestLoadMoreListener() {
+            @Override
+            public void onLoadMoreRequested() {
+                loadMore();
+            }
+        }, mRecyclerView);
+    }
+
+    boolean isSuccess = false;
+
+    private void loadMore() {
+        mRecyclerView.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                isSuccess = !isSuccess;
+                if (isSuccess) {
+                    multipleItemAdapter.addData(DataServer.getMultipleItemData());
+                    multipleItemAdapter.loadMoreComplete();
+                } else {
+                    multipleItemAdapter.loadMoreFail();
+                }
+            }
+        }, 3000);
     }
 
 
