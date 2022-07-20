@@ -35,3 +35,15 @@ dependencies {
     compile 'com.kyleduo.switchbutton:library:1.4.4'
     compile 'com.orhanobut:logger:1.15'
 }
+
+// 统一当前Module的所有support包版本,解决项目中不同Module的support包版本冲突
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        def requested = details.requested
+        if (requested.group == 'com.android.support') {
+            if (!requested.name.startsWith("multidex")) {
+                details.useVersion '25.2.0'
+            }
+        }
+    }
+}
