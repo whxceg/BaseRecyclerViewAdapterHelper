@@ -1,1 +1,23 @@
-include ':app', ':library'
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()//如果 jcenter 很慢，尝试添加 mavenCentral 并调整到首行
+        google()
+        maven { url "https://jitpack.io" }
+        maven { url 'https://repo1.maven.org/maven2/' }
+        maven { url 'https://dl.google.com/dl/android/maven2/' }
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        mavenCentral()//如果 jcenter 很慢，尝试添加 mavenCentral 并调整到首行
+        google()
+        maven { url "https://jitpack.io" }
+        maven { url 'https://repo1.maven.org/maven2/' }
+        maven { url 'https://dl.google.com/dl/android/maven2/' }
+    }
+}
+rootProject.name = "BaseRecyclerViewAdapterHelper"
+include ':app'
+include ':library'
