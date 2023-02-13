@@ -31,6 +31,7 @@ import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
@@ -743,6 +744,7 @@ public abstract class BaseQuickAdapter<T, K extends BaseViewHolder> extends Recy
     @Override
     public K onCreateViewHolder(ViewGroup parent, int viewType) {
         K baseViewHolder = null;
+        ViewParent viewParent = null;
         this.mContext = parent.getContext();
         this.mLayoutInflater = LayoutInflater.from(mContext);
         switch (viewType) {
@@ -750,12 +752,24 @@ public abstract class BaseQuickAdapter<T, K extends BaseViewHolder> extends Recy
                 baseViewHolder = getLoadingView(parent);
                 break;
             case HEADER_VIEW:
+                viewParent = mHeaderLayout != null ? mHeaderLayout.getParent() : null;
+                if (viewParent instanceof ViewGroup) {
+                    ((ViewGroup) viewParent).removeView(mHeaderLayout);
+                }
                 baseViewHolder = createBaseViewHolder(mHeaderLayout);
                 break;
             case EMPTY_VIEW:
+                viewParent = mEmptyLayout != null ? mEmptyLayout.getParent() : null;
+                if (viewParent instanceof ViewGroup) {
+                    ((ViewGroup) viewParent).removeView(mEmptyLayout);
+                }
                 baseViewHolder = createBaseViewHolder(mEmptyLayout);
                 break;
             case FOOTER_VIEW:
+                viewParent = mFooterLayout != null ? mFooterLayout.getParent() : null;
+                if (viewParent instanceof ViewGroup) {
+                    ((ViewGroup) viewParent).removeView(mFooterLayout);
+                }
                 baseViewHolder = createBaseViewHolder(mFooterLayout);
                 break;
             default:
